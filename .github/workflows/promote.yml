@@ -1,0 +1,31 @@
+name: Promote
+
+on:
+  workflow_dispatch:
+    inputs:
+      from:
+        description: "Original tag"
+        default: "latest"
+        required: true
+      to:
+        description: "Target tag"
+        default: "0.1"
+        required: true
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v3
+      - name: Provide doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Login to Digital Ocean Registry
+        run: doctl registry login --expiry-seconds 600
+      - name: Pull to Digital Ocean Registry
+        run: docker pull registry.digitalocean.com/tulip-registry/tulip-api:${{inputs.from}}
+      - name: Tag on Digital Ocean Registry
+        run: docker tag registry.digitalocean.com/tulip-registry/tulip-api:${{inputs.from}}  registry.digitalocean.com/tulip-registry/tulip-api:${{inputs.to}}
+      - name: Push to Digital Ocean Registry
+        run: docker push registry.digitalocean.com/tulip-registry/tulip-api:${{inputs.to}}

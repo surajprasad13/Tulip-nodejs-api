@@ -1,0 +1,11 @@
+[
+  {
+    "id": 1,
+    "email": "suraj@meettulip.com",
+    "user_id": null,
+    "lead_id": null,
+    "active": true,
+    "createdAt": null,
+    "updatedAt": null
+  }
+]

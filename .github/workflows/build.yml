@@ -1,0 +1,35 @@
+name: Tulip API image build
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+      - qa
+      - develop
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v3
+      - name: Build latest
+        run: docker build -f Dockerfile -t registry.digitalocean.com/tulip-registry/tulip-api:${GITHUB_REF##*/} .
+      - name: Provide doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Login to Digital Ocean Registry
+        run: doctl registry login --expiry-seconds 600
+      - name: Push to Digital Ocean Registry
+        run: docker push registry.digitalocean.com/tulip-registry/tulip-api:${GITHUB_REF##*/}
+      - name: Post to a Slack channel
+        id: slack
+        uses: slackapi/slack-github-action@v1.23.0
+        with:
+          channel-id: "C046KK57J5R"
+          slack-message: "GitHub build result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

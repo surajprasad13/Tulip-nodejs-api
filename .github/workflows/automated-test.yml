@@ -1,0 +1,35 @@
+name: Tulip API automated QA
+
+on:
+  workflow_dispatch:
+  # push:
+  #   branches: ["staging", "develop", "feature/TA-422_AutomatedQA"]
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    container:
+      image: registry.digitalocean.com/tulip-registry/tulip-api:latest
+      credentials:
+        username: ${{ secrets.DOCKERHUB_TOKEN }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    defaults:
+          run:
+            working-directory: /usr/src/app
+    steps:
+      - name: Run tests on current deployment
+        if: always()
+        run: yarn test:unit
+      - name: Archive test results
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          path: /usr/src/app/test-report.html
+      - name: Post to a Slack channel
+        id: slack
+        uses: slackapi/slack-github-action@v1.23.0
+        with:
+          channel-id: 'C046KK57J5R'
+          slack-message: "GitHub test result: ${{ job.status }}\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
